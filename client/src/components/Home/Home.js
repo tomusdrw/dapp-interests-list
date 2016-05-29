@@ -5,7 +5,7 @@ import NewList from '../NewList';
 import creatorAbi from './creator.abi';
 import {CREATION_COST} from './creator.abi';
 // TODO [ToDr] ?
-const CREATOR_ADDRESS = '0xd8a95cd5c89d059b991150cb2a699823c2cda0ce';
+const CREATOR_ADDRESS = '0x777861146e3369874e5240c4b783738f3133b896';
 
 export default class Home extends React.Component {
 
@@ -13,25 +13,31 @@ export default class Home extends React.Component {
     isError: false,
     isLoading: true,
     isCreating: false,
-    logs: [],
-    currentList: "",
+    lists: [],
+    currentList: '0x0',
   };
 
   componentWillMount() {
     this.contract = this.context.web3.eth.contract(creatorAbi).at(CREATOR_ADDRESS);
-    const events = this.contract.ListCreated({}, {
+    const events = this.contract.ListCreated({
+      parent: this.state.currentList
+    }, {
       fromBlock: 0,
       toBlock: 'latest'
     });
-    events.get(this.updateLogs);
     events.watch(this.updateLogs);
   }
 
-  updateLogs = (err, logs) => {
+  updateLogs = (err, log) => {
+    const name = hex2a(log.args.name.substr(2));
+    const address = log.args.target;
+
     this.setState({
       isError: err,
       isLoading: false,
-      logs: this.state.logs.concat(logs)
+      lists: this.state.lists.concat([{
+        name, address
+      }])
     });
   }
 
@@ -78,7 +84,7 @@ export default class Home extends React.Component {
           isCreating={this.state.isCreating}
           />
         {/* <RelatedLists lists={this.state.related} /> */}
-        <pre>{JSON.stringify(this.state.logs, null, 2)}</pre>
+        <pre>{JSON.stringify(this.state.lists, null, 2)}</pre>
       </div>
     );
   }
@@ -86,4 +92,13 @@ export default class Home extends React.Component {
   static contextTypes = {
     web3: React.PropTypes.object.isRequired
   };
+}
+
+function hex2a(hexx) {
+  const hex = hexx.toString();//force conversion
+  let str = '';
+  for (let i = 0; i < hex.length; i += 2) {
+    str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+  }
+  return str;
 }
