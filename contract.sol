@@ -1,31 +1,4 @@
 
-
-contract InterestListCreator {
-    uint constant CREATION_COST = 1 ether;
-    
-    event ListCreated(
-        bytes32 indexed parent,
-        bytes32 indexed name,
-        address indexed target
-    );
-    
-    function InterestListCreator() {
-        if (msg.value != 0) throw;
-    }
-
-    function createList(bytes32 _parent, bytes32 _name)
-    onlyWithCreationCost
-    returns (InterestsList) {
-        var t = new InterestsList(_parent, _name);
-        ListCreated(_parent, _name, t);
-        return t;
-    }
-    
-    modifier onlyWithCreationCost {
-        if (msg.value != CREATION_COST) throw;
-    }
-}
-
 contract InterestsList {
     
     uint constant MIN_ENTRY_COST = 0.5 ether;
@@ -79,6 +52,14 @@ contract InterestsList {
     function InterestsList(bytes32 _parent, bytes32 _name) {
         parent = _parent;
         name = _name;
+    }
+    
+    function getName() constant returns (bytes32) {
+        return name;
+    }
+    
+    function getParent() constant returns (bytes32) {
+        return parent;
     }
     
     function totalBalance() constant returns (uint totalBalance) {
@@ -177,5 +158,18 @@ contract InterestsList {
     modifier onlyMember {
         if (members[msg.sender].balance == 0) throw;
         _
+    }
+}
+
+
+contract TokenCreator {
+    function createToken(bytes32 name)
+       returns (InterestsList tokenAddress)
+    {
+        // Create a new Token contract and return its address.
+        // From the JavaScript side, the return type is simply
+        // "address", as this is the closest type available in
+        // the ABI.
+        return new InterestsList(name, name);
     }
 }
