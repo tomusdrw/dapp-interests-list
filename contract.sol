@@ -116,7 +116,7 @@ contract InterestsList {
             _message,
             msg.value, // Don't store donated here!
             now + (1 days),
-            0
+            burnDonated // Not sure if this should be just 0
         );
         
         Changed(_slotNo, msg.sender, _beneficiary, msg.value, burnDonated);
