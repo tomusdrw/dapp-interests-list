@@ -1,17 +1,24 @@
 
+
 contract InterestListCreator {
     uint constant CREATION_COST = 1 ether;
     
     event ListCreated(
-        byte[50] indexed parent,
-        byte[50] indexed name,
+        bytes32 indexed parent,
+        bytes32 indexed name,
         address indexed target
     );
+    
+    function InterestListCreator() {
+        if (msg.value != 0) throw;
+    }
 
-    function createList(byte[50] _parent, byte[50] _name)
-    onlyWithCreationCost {
-        address t = new InterestsList(_parent, _name);
+    function createList(bytes32 _parent, bytes32 _name)
+    onlyWithCreationCost
+    returns (InterestsList) {
+        var t = new InterestsList(_parent, _name);
         ListCreated(_parent, _name, t);
+        return t;
     }
     
     modifier onlyWithCreationCost {
@@ -64,12 +71,12 @@ contract InterestsList {
     /// Storage
     Message[8] messages;
     
-    byte[50] parent;
-    byte[50] name;
+    bytes32 parent;
+    bytes32 name;
     uint totalTokens;
     mapping(address => Member) members;
     
-    function InterestsList(byte[50] _parent, byte[50] _name) {
+    function InterestsList(bytes32 _parent, bytes32 _name) {
         parent = _parent;
         name = _name;
     }
@@ -116,7 +123,7 @@ contract InterestsList {
             _message,
             msg.value, // Don't store donated here!
             now + (1 days),
-            burnDonated // Not sure if this should be just 0
+            burnDonated
         );
         
         Changed(_slotNo, msg.sender, _beneficiary, msg.value, burnDonated);
