@@ -10,6 +10,12 @@ export default class NewList extends React.Component {
     name: ''
   };
 
+  componentWillReceiveProps (newProps) {
+    this.setState({
+      parent: newProps.defaultParent
+    })
+  }
+
   createNew = (ev) => {
     this.props.onNewList(this.state.parent, this.state.name);
 
@@ -53,7 +59,7 @@ export default class NewList extends React.Component {
   render () {
     return (
       <div className={'well'}>
-        <h3>Create new list ({this.props.cost} ETH)</h3>
+        <h4>Create new list ({this.props.cost} ETH)</h4>
         <form onSubmit={this.createNew}>
           <TextField
             hintText='Name of your list.'
@@ -74,6 +80,7 @@ export default class NewList extends React.Component {
   }
 
   static propTypes = {
+    defaultParent: React.PropTypes.string.isRequired,
     cost: React.PropTypes.number.isRequired,
     isCreating: React.PropTypes.bool,
     onNewList: React.PropTypes.func.isRequired

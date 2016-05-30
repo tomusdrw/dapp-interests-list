@@ -1,3 +1,34 @@
+contract InterestListCreator {
+    uint constant CREATION_COST = 1 ether;
+    
+    event ListCreated(
+        bytes32 indexed parent,
+        bytes32 indexed name,
+        address indexed target
+    );
+    
+    function InterestListCreator() {
+        if (msg.value != 0) throw;
+    }
+    
+    function () {
+        throw;
+    }
+
+    function createList(bytes32 _parent, bytes32 _name)
+    onlyWithCreationCost
+    returns (InterestsList) {
+        var t = new InterestsList(_parent, _name);
+        t.send(msg.value);
+        ListCreated(_parent, _name, t);
+        return t;
+    }
+    
+    modifier onlyWithCreationCost {
+        if (msg.value != CREATION_COST) throw;
+        _
+    }
+}
 
 contract InterestsList {
     
@@ -52,6 +83,17 @@ contract InterestsList {
     function InterestsList(bytes32 _parent, bytes32 _name) {
         parent = _parent;
         name = _name;
+    }
+
+    function getMessage(uint8 _slotNo) constant
+      returns (address, address, string, string, uint, uint, uint) 
+    {
+      var msg = messages[_slotNo];
+      return (msg.submitter, msg.beneficiary, msg.title, msg.message, msg.deposit, msg.deadline, msg.donations);
+    }
+    
+    function getNoOfSlots() constant returns (uint8) {
+        return uint8(messages.length);
     }
     
     function getName() constant returns (bytes32) {
@@ -130,10 +172,6 @@ contract InterestsList {
         Donated(msg.sender, _beneficiary, _amount);
     }
     
-    function () {
-        join();
-    }
-    
     function join()
     onlyWithMinEntry {
         // Tokens created
@@ -158,18 +196,5 @@ contract InterestsList {
     modifier onlyMember {
         if (members[msg.sender].balance == 0) throw;
         _
-    }
-}
-
-
-contract TokenCreator {
-    function createToken(bytes32 name)
-       returns (InterestsList tokenAddress)
-    {
-        // Create a new Token contract and return its address.
-        // From the JavaScript side, the return type is simply
-        // "address", as this is the closest type available in
-        // the ABI.
-        return new InterestsList(name, name);
     }
 }

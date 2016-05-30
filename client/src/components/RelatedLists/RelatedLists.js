@@ -12,7 +12,7 @@ export default class RelatedLists extends React.Component {
           <FlatButton
             key={list.name}
             onTouchTap={this.props.onChange.bind(this, list)}
-            label={list.name}
+            label={`${this.props.parent}/${list.name}`}
             />
         ))}
       </div>
@@ -20,6 +20,7 @@ export default class RelatedLists extends React.Component {
   }
 
   static propTypes = {
+    parent: React.PropTypes.string.isRequired,
     related: React.PropTypes.array.isRequired,
     onChange: React.PropTypes.func.isRequired
   };

@@ -2,11 +2,13 @@ import React from 'react';
 
 import NewList from '../NewList';
 import RelatedLists from '../RelatedLists';
+import Board from '../Board';
 
+import listAbi from './list.abi';
 import creatorAbi from './creator.abi';
 import {CREATION_COST} from './creator.abi';
 // TODO [ToDr] ?
-const CREATOR_ADDRESS = '0x777861146e3369874e5240c4b783738f3133b896';
+const CREATOR_ADDRESS = '0x07e8bd97fdd7a7bd12bce8892f914cdcf4f68e89';
 
 export default class Home extends React.Component {
 
@@ -15,6 +17,7 @@ export default class Home extends React.Component {
     isLoading: true,
     isCreating: false,
     related: [],
+    board: {},
     currentList: {
       name: '',
       address: CREATOR_ADDRESS
@@ -25,29 +28,90 @@ export default class Home extends React.Component {
 
   componentWillMount() {
     this.contract = this.context.web3.eth.contract(creatorAbi).at(CREATOR_ADDRESS);
-    this.events = {
+    this.related = {
       stopWatching: () => {}
     };
-    this.restartWatching();
+    this.board = {
+      stopWatching: () => {}
+    };
+    this.restartRelatedWatching(this.state.currentList);
   }
 
-  restartWatching () {
-    this.events.stopWatching();
-    this.events = this.contract.ListCreated({
-      parent: this.state.currentList.name
+  restartRelatedWatching (currentList) {
+    this.setState({
+      related: [],
+    });
+    this.related.stopWatching();
+    this.related = this.contract.ListCreated({
+      parent: currentList.name
     }, {
       fromBlock: 0,
       toBlock: 'latest'
     });
-    this.setState({
-      related: []
-    });
-    this.events.watch(this.updateLogs);
+    this.related.get(this.updateLogs);
+    this.related.watch(this.updateLog);
   }
 
-  updateLogs = (err, log) => {
+  restartBoardWatching (currentList) {
+    this.setState({
+      board: {}
+    });
+    this.board.stopWatching();
+
+    if (!currentList.name) {
+      return;
+    }
+    this.boardContract = this.context.web3.eth.contract(listAbi).at(currentList.address);
+    this.board = this.boardContract.Changed({}, {
+      from: 'latest',
+      to: 'latest'
+    });
+    this.board.watch(this.refetchBoard);
+  }
+
+  refetchBoard = () => {
+    this.setState({
+      board: {}
+    });
+    this.boardContract.getNoOfSlots((err, noOfSlots) => {
+      Array(noOfSlots).join('m').split('m').map(slotNo => {
+        this.boardContract.getMessage(slotNo, (err, message) => {
+          // clone board
+          const board = Object.assign({}, this.state.board);
+          board[slotNo] = message;
+          console.log(message);
+          this.setState({
+            board: board
+          });
+        });
+      });
+    });
+  }
+
+  updateLogs = (err, logs) => {
+    this.setState({
+      isLoading: false,
+      isError: err
+    });
+    logs.map((log) => {
+      this.updateLog(err, log)
+    });
+  }
+
+  updateLog = (err, log) => {
     const name = hex2a(log.args.name.substr(2));
     const address = log.args.target;
+
+    const names = this.state.related.map(l => l.name);
+    if (names.indexOf(name) !== -1) {
+      // We already have this name,
+      // web3 returns the same log multiple times.
+      this.setState({
+        isLoading: false,
+        isError: err
+      });
+      return;
+    }
 
     this.setState({
       isError: err,
@@ -63,7 +127,8 @@ export default class Home extends React.Component {
       previousLists: this.state.previousLists.concat([this.state.currentList]),
       currentList: list
     });
-    this.restartWatching();
+    this.restartRelatedWatching(list);
+    this.restartBoardWatching(list);
   }
 
   createNewList = (parent, name) => {
@@ -84,19 +149,8 @@ export default class Home extends React.Component {
   }
 
   componentWillUnmount() {
-    this.events.stopWatching();
-  }
-
-  renderBoard () {
-    const {name} = this.state.currentList;
-    // Main contract doesn't have a board
-    if (!name) {
-      return;
-    }
-
-    return (
-      <h1>List {name}</h1>   
-    );
+    this.related.stopWatching();
+    this.board.stopWatching();
   }
 
   render () {
@@ -115,15 +169,20 @@ export default class Home extends React.Component {
     return (
       <div className={'container'}>
         <br/>
+        <Board
+          list={this.state.currentList}
+          board={this.state.board}
+          />
+        <RelatedLists
+          parent={this.state.currentList.name}
+          related={this.state.related}
+          onChange={this.selectList}
+          />
         <NewList
+          defaultParent={this.state.currentList.name}
           cost={CREATION_COST}
           onNewList={this.createNewList}
           isCreating={this.state.isCreating}
-          />
-        {this.renderBoard()}
-        <RelatedLists
-          related={this.state.related}
-          onChange={this.selectList}
           />
       </div>
     );
