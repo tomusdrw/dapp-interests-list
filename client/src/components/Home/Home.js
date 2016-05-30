@@ -1,6 +1,7 @@
 import React from 'react';
 
 import NewList from '../NewList';
+import RelatedLists from '../RelatedLists';
 
 import creatorAbi from './creator.abi';
 import {CREATION_COST} from './creator.abi';
@@ -13,19 +14,35 @@ export default class Home extends React.Component {
     isError: false,
     isLoading: true,
     isCreating: false,
-    lists: [],
-    currentList: '0x0',
+    related: [],
+    currentList: {
+      name: '',
+      address: CREATOR_ADDRESS
+    },
+    // TODO [ToDr] Use that to go back
+    previousLists: []
   };
 
   componentWillMount() {
     this.contract = this.context.web3.eth.contract(creatorAbi).at(CREATOR_ADDRESS);
-    const events = this.contract.ListCreated({
-      parent: this.state.currentList
+    this.events = {
+      stopWatching: () => {}
+    };
+    this.restartWatching();
+  }
+
+  restartWatching () {
+    this.events.stopWatching();
+    this.events = this.contract.ListCreated({
+      parent: this.state.currentList.name
     }, {
       fromBlock: 0,
       toBlock: 'latest'
     });
-    events.watch(this.updateLogs);
+    this.setState({
+      related: []
+    });
+    this.events.watch(this.updateLogs);
   }
 
   updateLogs = (err, log) => {
@@ -35,10 +52,18 @@ export default class Home extends React.Component {
     this.setState({
       isError: err,
       isLoading: false,
-      lists: this.state.lists.concat([{
+      related: this.state.related.concat([{
         name, address
       }])
     });
+  }
+
+  selectList = (list) => {
+    this.setState({
+      previousLists: this.state.previousLists.concat([this.state.currentList]),
+      currentList: list
+    });
+    this.restartWatching();
   }
 
   createNewList = (parent, name) => {
@@ -59,7 +84,19 @@ export default class Home extends React.Component {
   }
 
   componentWillUnmount() {
-    this.contract.stopWatching();
+    this.events.stopWatching();
+  }
+
+  renderBoard () {
+    const {name} = this.state.currentList;
+    // Main contract doesn't have a board
+    if (!name) {
+      return;
+    }
+
+    return (
+      <h1>List {name}</h1>   
+    );
   }
 
   render () {
@@ -83,8 +120,11 @@ export default class Home extends React.Component {
           onNewList={this.createNewList}
           isCreating={this.state.isCreating}
           />
-        {/* <RelatedLists lists={this.state.related} /> */}
-        <pre>{JSON.stringify(this.state.lists, null, 2)}</pre>
+        {this.renderBoard()}
+        <RelatedLists
+          related={this.state.related}
+          onChange={this.selectList}
+          />
       </div>
     );
   }
@@ -98,7 +138,10 @@ function hex2a(hexx) {
   const hex = hexx.toString();//force conversion
   let str = '';
   for (let i = 0; i < hex.length; i += 2) {
-    str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    const v = parseInt(hex.substr(i, 2), 16);
+    if (v !== 0) {
+      str += String.fromCharCode(v);
+    }
   }
   return str;
 }
