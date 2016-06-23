@@ -1,0 +1,48 @@
+.slot {
+  min-height: 300px;
+  height: 20vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.slot .content {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 2rem;
+}
+
+.slot .separator {
+  flex: 1 1 auto;
+}
+
+.emptySlot::after, .emptySlot::before {
+  display: block;
+  content: ' ';
+  flex: 1 1 auto;
+}
+
+.emptySlot {
+  text-align: center;
+  background-color: #eee;
+  opacity: 0.7;
+  transition: opacity 0.3 ease;
+}
+.emptySlot:hover {
+  opacity: 1.0;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #eee;
+  display: flex;
+  padding: 0.5rem;
+}
+.footer .separator {
+  flex: 1 1 auto;
+}
+

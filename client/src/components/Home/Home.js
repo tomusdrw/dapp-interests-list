@@ -61,6 +61,7 @@ export default class Home extends React.Component {
     if (!currentList.name) {
       return;
     }
+
     this.boardContract = this.context.web3.eth.contract(listAbi).at(currentList.address);
     this.board = this.boardContract.Changed({}, {
       from: 'latest',

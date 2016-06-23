@@ -1,5 +1,11 @@
 import React from 'react';
 
+import EthValue from '../EthValue';
+import Address from '../Address';
+import Date from '../Date';
+
+import styles from './styles.css';
+
 export default class Slot extends React.Component {
   static propTypes = {
     slot: React.PropTypes.array
@@ -21,31 +27,37 @@ export default class Slot extends React.Component {
     const donations = slot[6];
 
     return (
-      <div className='thumbnail'>
-        <div className='caption'>
-          <div className='pull-right text-right'>
+      <div className={`thumbnail ${styles.slot}`}>
+        <div className={`caption ${styles.content}`}>
+          <div>
             <span
-              className='label label-success'
+              className='label label-success pull-right'
               title='Total amount of Ether donated.'
               >
-              {donations.toFormat(3)} ETH Donated
+              <EthValue wei={donations} /> donated
             </span>
-            <br />
             <span
-              className='label label-danger'
+              className='label label-danger pull-left'
               title='Ethere value deposited by a sender.'
               >
-              {deposit.toFormat(3)} ETH Payed
+              <EthValue wei={deposit} /> payed
             </span>
           </div>
           <h3>{title}</h3>
           <p>{message}</p>
-          <p>Posted by {submitter}</p>
+          <span className={styles.separator}></span>
           <p className='text-center'>
-            <a href='#' className='btn btn-success btn-link'>
-              Donate (1 ETH) to {beneficiary}
+            <a href='#' className='btn btn-success'>
+              Donate <EthValue eth={1} />
+              <br />
+              <Address address={beneficiary} />
             </a>
           </p>
+          <div className={styles.footer}>
+            <span>Author: <Address address={submitter} /></span>
+            <span className={styles.separator} />
+            <span>Date: <Date timestamp={Number(deadline)} /></span>
+          </div>
         </div>
       </div>
     );
@@ -53,8 +65,13 @@ export default class Slot extends React.Component {
 
   renderSlotFree () {
     return (
-      <div className='thumbnail'>
-        'Free!'
+      <div className={`thumbnail ${styles.slot} ${styles.emptySlot}`}>
+        <div className={`caption ${styles.content}`}>
+          <p>This slot is empty.</p>
+          <button className='btn btn-link btn-primary'>
+            Post Message
+          </button>
+        </div>
       </div>
     );
   }
