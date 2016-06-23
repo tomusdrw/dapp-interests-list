@@ -1,0 +1,13 @@
+## InterestList contract should be just dispatcher.
+
+Probably might be good to have a leave function there,
+that calls a leave hook of logic to give people the confidence
+that they can always withdraw their funds.
+
+## There should be only single logic contract.
+
+## Logic should be easy to change.
+
+- who is allowed to change the logic?
+- transfering ownership?
+- Delay for logic change

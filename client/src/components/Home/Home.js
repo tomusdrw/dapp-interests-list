@@ -67,19 +67,25 @@ export default class Home extends React.Component {
       to: 'latest'
     });
     this.board.watch(this.refetchBoard);
+    this.refetchBoard();
   }
 
   refetchBoard = () => {
     this.setState({
       board: {}
     });
+
     this.boardContract.getNoOfSlots((err, noOfSlots) => {
-      Array(noOfSlots).join('m').split('m').map(slotNo => {
+      Array(Number(noOfSlots)).join('m').split('m').map((v, slotNo) => {
         this.boardContract.getMessage(slotNo, (err, message) => {
           // clone board
           const board = Object.assign({}, this.state.board);
-          board[slotNo] = message;
-          console.log(message);
+          // detect empty slots
+          if (err || Number(message[4]) === 0) {
+            board[slotNo] = null;
+          } else {
+            board[slotNo] = message;
+          }
           this.setState({
             board: board
           });

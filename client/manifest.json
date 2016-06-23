@@ -1,0 +1,8 @@
+{
+  "id": "interests-list",
+  "name": "Interests List",
+  "description": "Your Ethereum Home Page",
+  "version": "0.0.1",
+  "author": "todr <tomasz@ethcore.io>",
+  "iconUrl": "logo.png"
+}

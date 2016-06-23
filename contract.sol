@@ -131,13 +131,11 @@ contract InterestsList {
         // Burn donation tokens
         members[msg.sender].donated -= burnDonated;
           
-        // Otherwise takeover the spot
-        // But refund the original bidder
-        // (if deadline was not reached yet)
-        if (!deadlineReached) {
-            messages[_slotNo].submitter.send(messages[_slotNo].deposit);
-        }
+        // Store value to do the refund
+        address oldSubmitter = messages[_slotNo].submitter;
+        uint oldDeposit = messages[_slotNo].deposit;
         
+        // Otherwise takeover the spot
         // Assign your own messages
         messages[_slotNo] = Message(
             msg.sender,
@@ -148,7 +146,14 @@ contract InterestsList {
             now + (1 days),
             burnDonated
         );
-        
+
+        // Refund the original bidder
+        // (if deadline was not reached yet)
+        if (!deadlineReached) {
+            bool sent = oldSubmitter.send(oldDeposit);
+            if (!sent) throw;
+        }
+
         Changed(_slotNo, msg.sender, _beneficiary, msg.value, burnDonated);
     }
     
@@ -168,7 +173,8 @@ contract InterestsList {
         members[msg.sender].balance -= _amount;
         totalTokens -= _amount;
         // And finally send
-        _beneficiary.send(_amount);
+        bool sent = _beneficiary.send(_amount);
+        if (!sent) throw;
         Donated(msg.sender, _beneficiary, _amount);
     }
     
@@ -186,7 +192,8 @@ contract InterestsList {
         var reward = members[msg.sender].balance * this.balance / totalTokens;
         totalTokens -= members[msg.sender].balance;
         delete members[msg.sender];
-        msg.sender.send(reward);
+        bool sent = msg.sender.send(reward);
+        if (!sent) throw;
     }
     
     modifier onlyWithMinEntry {
